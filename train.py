@@ -21,16 +21,16 @@ hp = parser.parse_args()
 save_hparams(hp, hp.logdir)
 
 logging.info("# Prepare train/eval batches")
-train_batches, num_train_batches, num_train_samples = get_batch(hp.train1,
-                                                                hp.maxlen1,
-                                                                hp.maxlen2,
+train_batches, num_train_batches, num_train_samples = get_batch(hp.train,
+                                                                hp.maxlen,
+                                                                hp.maxlen,
                                                                 hp.vocab,
                                                                 hp.batch_size,
                                                                 shuffle=True)
 
-eval_batches, num_eval_batches, num_eval_samples = get_batch(hp.eval1,
-                                                             hp.maxlen1,
-                                                             hp.maxlen2,
+eval_batches, num_eval_batches, num_eval_samples = get_batch(hp.eval,
+                                                             hp.maxlen,
+                                                             hp.maxlen,
                                                              hp.vocab,
                                                              hp.batch_size,
                                                              shuffle=False)

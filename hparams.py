@@ -8,12 +8,12 @@ class Hparams:
 
     # train
     ## files
-    parser.add_argument('--train1', default='data/lscts/train.csv|data/sougou/train.csv',
+    parser.add_argument('--train', default='data/lscts/train.csv|data/sougou/train.csv',
                              help="german training segmented data")
 
-    parser.add_argument('--eval1', default='data/lscts/test.csv',
+    parser.add_argument('--eval', default='data/lscts/test.csv',
                              help="german evaluation segmented data")
-    parser.add_argument('--eval3', default='data/lscts/test_summary.csv',
+    parser.add_argument('--eval', default='data/lscts/test_summary.csv',
                              help="english evaluation unsegmented data")
 
     ## vocabulary
@@ -39,9 +39,9 @@ class Hparams:
                         help="number of encoder/decoder blocks")
     parser.add_argument('--num_heads', default=8, type=int,
                         help="number of attention heads")
-    parser.add_argument('--maxlen1', default=128, type=int,
+    parser.add_argument('--maxlen', default=128, type=int,
                         help="maximum length of a source sequence")
-    parser.add_argument('--maxlen2', default=20, type=int,
+    parser.add_argument('--maxlen', default=20, type=int,
                         help="maximum length of a target sequence")
     parser.add_argument('--dropout_rate', default=0.1, type=float)
     parser.add_argument('--beam_size', default=4, type=int,
