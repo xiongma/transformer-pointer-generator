@@ -44,18 +44,5 @@ class Hparams:
     parser.add_argument('--maxlen2', default=20, type=int,
                         help="maximum length of a target sequence")
     parser.add_argument('--dropout_rate', default=0.1, type=float)
-    parser.add_argument('--smoothing', default=0.1, type=float,
-                        help="label smoothing rate")
     parser.add_argument('--beam_size', default=4, type=int,
                         help="beam size")
-
-    # test
-    parser.add_argument('--test1', default='iwslt2016/segmented/test.de.bpe',
-                        help="german test segmented data")
-    parser.add_argument('--test2', default='iwslt2016/prepro/test.en',
-                        help="english test data")
-    parser.add_argument('--ckpt', help="checkpoint file path")
-    parser.add_argument('--test_batch_size', default=128, type=int)
-    parser.add_argument('--testdir', default="test/1", help="test result dir")
-
-    parser.add_argument('--gpu_list', default=[0], help="gpu list")
