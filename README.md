@@ -1,4 +1,4 @@
-# A Abstractive Summarization Implementation by Transformer with Pointer-generator
+# A Abstractive Summarization Implementation with Transformer and Pointer-generator
 when I wanted to get summary by neural network, I tried many ways to generator abstract summary, but the result was not good.
 when I heared 2018 byte cup, I found some information about it, and the champion's solution attracted me, but I found some websites,
 like github gitlab, I didn't find the official code, so I decided to implement it.
