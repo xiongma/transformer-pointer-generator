@@ -28,7 +28,14 @@ in this model, I just use word than vocab, this idea is from bert.
 * STEP 1. [download](https://pan.baidu.com/s/1szq0Wa60AS5ISpM_SNPcbA) the dataset, pwd is ayn6, the dataset is lcsts by pre processed, so you will see very different dataset structure with lcsts in the file
 each line is abstract and article, they split by ",", if you worry the amount of the dataset is different between my and lcsts, don't 
 worry, the amout of the dataset is same as lcsts. 
-* STEP 2. Check hparams.py to see which parameters are possible. 
+* STEP 2. Run the following command.
+```
+python train.py
+```
+Check `hparams.py` to see which parameters are possible. For example,
+```
+python train.py --logdir myLog --batch_size 32 --train myTrain --eval myEval --test myTest
+```
 
 | name | type | detail |
 |--------------------|------|-------------|
@@ -54,13 +61,4 @@ dropout_rate | float| dropout rate
 beam_size | int| beam size for decode
 ### Note
 Don't change the hyper-parameters of transformer util you have good solution, it will let the loss can't go down! if you have good solution, I hope you can tell me.
-
-* STEP 3. Run the following command.
-```
-python train.py
-```
-Check `hparams.py` to see which parameters are possible. For example,
-```
-python train.py --logdir myLog --batch_size 32 --train myTrain --eval myEval --test myTest
-```
 
