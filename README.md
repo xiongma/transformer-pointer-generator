@@ -10,18 +10,18 @@ like github gitlab, I didn't find the official code, so I decided to implement i
 * sentencepiece==0.1.8
 * tqdm>=4.28.1
 
-## model structure
-### base
+## Model Structure
+### Base
 my model is based on [Attention Is All You Need](https://arxiv.org/abs/1706.03762) and [Get To The Point: Summarization with Pointer-Generator Networks](https://arxiv.org/abs/1704.04368)
-### change
+### Change
 * The pointer-generator model has two mechanisms, which are **copy mechanism** and **coverage mechanism**, I found some materials, 
 they show the Coverage mechanism doesn't suit short summary, so I don't use this mechanism, just use the first one.
-* pointer generator model has a inadequacy, which can let the loss got nan, I tried some times and want to fixed it,
+* Pointer generator model has a inadequacy, which can let the loss got nan, I tried some times and want to fixed it,
 but the result is I can't, I think the reason is when calculate final logists, it will 
  extend vocab length to oov and vocab length, it will get more zeroes. so I delete the mechanism of extend final logists, just use their mechanism of 
 deocode from article and vocab. there is more [detail](https://github.com/abisee/pointer-generator/issues/4) about it, 
 in this model, I just use word than vocab, this idea is from bert.
-### structure
+### Structure
 <img src="fig/structure.jpg">
 
 ## Training
@@ -33,9 +33,9 @@ worry, the amout of the dataset is same as lcsts.
 | name | type | detail |
 |--------------------|------|-------------|
 vocab_size | int | vocab size
-train1 | str | train dataset dir
-eval1 | str| eval dataset dir
-eval3 | str| calculate rouge score dataset dir
+train | str | train dataset dir
+eval | str| eval dataset dir
+test | str| data for calculate rouge score
 vocab | str| vocabulary file path
 batch_size | int| train batch size
 eval_batch_size | int| eval batch size
@@ -48,8 +48,19 @@ d_model | int| hidden dimension of encoder/decoder
 d_ff | int| hidden dimension of feedforward layer
 num_blocks | int| number of encoder/decoder blocks
 num_heads | int| number of attention heads
-maxlen1 | int| maximum length of a source sequence
-maxlen2 | int| maximum length of a target sequence
+maxlen | int| maximum length of a source sequence
+maxlen | int| maximum length of a target sequence
 dropout_rate | float| dropout rate
 beam_size | int| beam size for decode
+### Note
+* Don't change the hyper-parameters of transformer, it will let the loss can't go down! if you have good solution, I hope you can tell me.
+
+* STEP 3. Run the following command.
+```
+python train.py
+```
+Check `hparams.py` to see which parameters are possible. For example,
+```
+python train.py --logdir myLog --batch_size 32 --train myTrain --eval myEval --test myTest
+```
 

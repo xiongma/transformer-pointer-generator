@@ -9,12 +9,12 @@ class Hparams:
     # train
     ## files
     parser.add_argument('--train', default='data/lscts/train.csv|data/sougou/train.csv',
-                             help="german training segmented data")
+                             help="data for train")
 
     parser.add_argument('--eval', default='data/lscts/test.csv',
-                             help="german evaluation segmented data")
-    parser.add_argument('--eval', default='data/lscts/test_summary.csv',
-                             help="english evaluation unsegmented data")
+                             help="data for evaluation")
+    parser.add_argument('--test', default='data/lscts/test_summary.csv',
+                             help="data for calculate rouge score")
 
     ## vocabulary
     parser.add_argument('--vocab', default='vocab',
