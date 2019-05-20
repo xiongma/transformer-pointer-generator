@@ -11,6 +11,17 @@ like github gitlab, I didn't find the official code, so I decided to implement i
 * tqdm>=4.28.1
 
 ## model structure
+### base
+my model is based on [Attention Is All You Need](https://arxiv.org/abs/1706.03762) and [Get To The Point: Summarization with Pointer-Generator Networks](https://arxiv.org/abs/1704.04368)
+### change
+* The pointer-generator model has two mechanisms, which are **copy mechanism** and **coverage mechanism**, I found some materials, 
+they show the Coverage mechanism doesn't suit short summary, so I don't use this mechanism, just use the first one.
+* pointer generator model has a inadequacy, which can let the loss got nan, I tried some times and want to fixed it,
+but the result is I can't, I think the reason is when calculate final logists, it will 
+ extend vocab length to oov and vocab length, it will get more zeroes. so I delete the mechanism of extend final logists, just use their mechanism of 
+deocode from article and vocab. there is more [detail](https://github.com/abisee/pointer-generator/issues/4) about it, 
+in this model, I just use word than vocab, this idea is from bert.
+### structure
 <img src="fig/structure.jpg">
 
 ## Training

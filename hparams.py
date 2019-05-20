@@ -17,7 +17,7 @@ class Hparams:
                              help="english evaluation unsegmented data")
 
     ## vocabulary
-    parser.add_argument('--vocab', default='data/vocab.txt',
+    parser.add_argument('--vocab', default='vocab',
                         help="vocabulary file path")
 
     # training scheme
