@@ -53,7 +53,7 @@ maxlen | int| maximum length of a target sequence
 dropout_rate | float| dropout rate
 beam_size | int| beam size for decode
 ### Note
-* Don't change the hyper-parameters of transformer, it will let the loss can't go down! if you have good solution, I hope you can tell me.
+Don't change the hyper-parameters of transformer util you have good solution, it will let the loss can't go down! if you have good solution, I hope you can tell me.
 
 * STEP 3. Run the following command.
 ```
