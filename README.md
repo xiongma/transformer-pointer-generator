@@ -25,9 +25,9 @@ in this model, I just use word than vocab, this idea is from bert.
 <img src="fig/structure.jpg">
 
 ## Training
-* STEP 1. [download](https://pan.baidu.com/s/1szq0Wa60AS5ISpM_SNPcbA) the dataset, pwd is ayn6, the dataset is LSCTS by pre processed, so you will see very different dataset structure with LSCTS in the file
-each line is abstract and article, they split by **","**, if you worry the amount of the dataset is different between my and LSCTS, don't 
-worry, the amout of the dataset is same as LSCTS. 
+* STEP 1. [download](https://pan.baidu.com/s/1szq0Wa60AS5ISpM_SNPcbA) the dataset, pwd is ayn6, the dataset is LCSTS by pre processed, so you will see very different dataset structure with LCSTS in the file
+each line is abstract and article, they split by **","**, if you worry the amount of the dataset is different between my and LCSTS, don't 
+worry, the amout of the dataset is same as LCSTS. 
 * STEP 2. Run the following command.
 ```
 python train.py
