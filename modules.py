@@ -1,5 +1,10 @@
 # -*- coding: utf-8 -*-
 #/usr/bin/python3
+'''
+date: 2019/5/21
+mail: cally.maxiong@gmail.com
+page: http://www.cnblogs.com/callyblog/
+'''
 
 import numpy as np
 import tensorflow as tf
@@ -125,18 +130,16 @@ def mask(inputs, queries=None, keys=None, type=None):
         # Generate masks
         masks = tf.sign(tf.reduce_sum(tf.abs(keys), axis=-1))  # (N, T_k)
         masks = tf.expand_dims(masks, 1) # (N, 1, T_k)
-        # 这里的目的是: 因为有query要来查询, 而每个encoder编码时刻的key值有些为0，有些不为0，所有要复制query长度的key
         masks = tf.tile(masks, [1, tf.shape(queries)[1], 1])  # (N, T_q, T_k)
 
         # Apply masks to inputs
         paddings = tf.ones_like(inputs) * padding_num
-        # 它是想让那些key值的unit为0的key对应的attention score极小
+
         outputs = tf.where(tf.equal(masks, 0), paddings, inputs)  # (N, T_q, T_k)
-    elif type in ("q", "query", "queries"): # 去除<pad>，因为<pad>为0
+    elif type in ("q", "query", "queries"):
         # Generate masks
         masks = tf.sign(tf.reduce_sum(tf.abs(queries), axis=-1))  # (N, T_q)
         masks = tf.expand_dims(masks, -1)  # (N, T_q, 1)
-        # 这里的目的是：因为有k个长度
         masks = tf.tile(masks, [1, 1, tf.shape(keys)[1]])  # (N, T_q, T_k)
 
         # Apply masks to inputs

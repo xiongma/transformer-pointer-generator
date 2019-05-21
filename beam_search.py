@@ -1,5 +1,10 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/python3
+'''
+date: 2019/5/21
+mail: cally.maxiong@gmail.com
+page: http://www.cnblogs.com/callyblog/
+'''
 
 import tensorflow as tf
 # add self to decode memory
