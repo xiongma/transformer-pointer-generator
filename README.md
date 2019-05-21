@@ -69,3 +69,6 @@ Don't change the hyper-parameters of transformer util you have good solution, it
 * transformer 
 <img src="fig/transformer-loss.png">
 As you see, transformer-pointer generator model can let the loss go down very quickly!
+
+## Todo
+Add rouge score
