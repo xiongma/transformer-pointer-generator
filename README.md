@@ -62,3 +62,10 @@ beam_size | int| beam size for decode
 ### Note
 Don't change the hyper-parameters of transformer util you have good solution, it will let the loss can't go down! if you have good solution, I hope you can tell me.
 
+## Evaluation
+### Loss
+* transformer-pointer generator
+<img src="fig/transformer-pointer gererator-loss.png">
+* transformer 
+<img src="fig/transformer-loss.png">
+As you see, transformer-pointer generator model can let the loss go down very quickly!
