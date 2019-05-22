@@ -96,9 +96,9 @@ def _generator_fn(sents1, sents2, vocab_fpath):
     for sent1, sent2 in zip(sents1, sents2):
         x = _encode(sent1, token2idx, "x")
 
-        inputs, inputs = _encode(sent2, token2idx, "y")
+        inputs, targets = _encode(sent2, token2idx, "y")
 
-        yield (x, sent1.decode('utf-8')), (inputs, inputs, sent2.decode('utf-8'))
+        yield (x, sent1.decode('utf-8')), (inputs, targets, sent2.decode('utf-8'))
 
 def _input_fn(sents1, sents2, vocab_fpath, batch_size, shuffle=False):
     '''Batchify data
@@ -119,11 +119,11 @@ def _input_fn(sents1, sents2, vocab_fpath, batch_size, shuffle=False):
         y_seqlen: int32 tensor. (N, )
         sents2: str tensor. (N,)
     '''
-    shapes = (([None], (), [None], ()),
+    shapes = (([None], ()),
               ([None], [None], ()))
-    types = ((tf.int32, tf.string, tf.string, tf.int32),
+    types = ((tf.int32, tf.string),
              (tf.int32, tf.int32, tf.string))
-    paddings = ((0, '', '', 0),
+    paddings = ((0, ''),
                 (0, 0, ''))
 
     dataset = tf.data.Dataset.from_generator(

@@ -15,12 +15,12 @@ class Hparams:
 
     # train
     ## files
-    parser.add_argument('--train', default='data/lscts/train.csv|data/sougou/train.csv',
+    parser.add_argument('--train', default='data/train.csv',
                              help="data for train")
 
-    parser.add_argument('--eval', default='data/lscts/test.csv',
+    parser.add_argument('--eval', default='data/test.csv',
                              help="data for evaluation")
-    parser.add_argument('--test', default='data/lscts/test_summary.csv',
+    parser.add_argument('--test', default='data/test_summary.csv',
                              help="data for calculate rouge score")
 
     ## vocabulary
@@ -46,10 +46,14 @@ class Hparams:
                         help="number of encoder/decoder blocks")
     parser.add_argument('--num_heads', default=8, type=int,
                         help="number of attention heads")
-    parser.add_argument('--maxlen', default=128, type=int,
+    parser.add_argument('--maxlen1', default=128, type=int,
                         help="maximum length of a source sequence")
-    parser.add_argument('--maxlen', default=20, type=int,
+    parser.add_argument('--maxlen2', default=20, type=int,
                         help="maximum length of a target sequence")
     parser.add_argument('--dropout_rate', default=0.1, type=float)
     parser.add_argument('--beam_size', default=4, type=int,
                         help="beam size")
+    parser.add_argument('--multi_gpu', default=False, type=bool,
+                        help="whether use multi gpu to train model")
+    parser.add_argument('--gpu_nums', default=4, type=int,
+                        help="gpu amount, which can allow how many gpu to train this model")

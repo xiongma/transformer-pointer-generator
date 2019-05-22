@@ -28,15 +28,15 @@ save_hparams(hp, hp.logdir)
 
 logging.info("# Prepare train/eval batches")
 train_batches, num_train_batches, num_train_samples = get_batch(hp.train,
-                                                                hp.maxlen,
-                                                                hp.maxlen,
+                                                                hp.maxlen1,
+                                                                hp.maxlen2,
                                                                 hp.vocab,
                                                                 hp.batch_size,
                                                                 shuffle=True)
 
 eval_batches, num_eval_batches, num_eval_samples = get_batch(hp.eval,
-                                                             hp.maxlen,
-                                                             hp.maxlen,
+                                                             hp.maxlen1,
+                                                             hp.maxlen2,
                                                              hp.vocab,
                                                              hp.batch_size,
                                                              shuffle=False)
@@ -51,7 +51,13 @@ eval_init_op = iter.make_initializer(eval_batches)
 
 logging.info("# Load model")
 m = Transformer(hp)
-loss, train_op, global_step, train_summaries = m.train_multi_gpu(xs, ys)
+
+# whether use multi gpu
+if hp.multi_gpu:
+    loss, train_op, global_step, train_summaries = m.train_multi_gpu(xs, ys)
+else:
+    loss, train_op, global_step, train_summaries = m.train(xs, ys)
+
 y_hat, eval_summaries, sent2, pred = m.eval(xs, ys)
 
 logging.info("# Session")
@@ -75,8 +81,7 @@ with tf.Session(config=tf.ConfigProto(allow_soft_placement=True)) as sess:
         epoch = math.ceil(_gs / num_train_batches)
         summary_writer.add_summary(_summary, _gs)
 
-        # if _gs and _gs % num_train_batches == 0:
-        if _gs % 5000 == 0:
+        if _gs % 5000 == 0 and _gs != 0:
             logging.info("steps {} is done".format(_gs))
             _loss = sess.run(loss) # train loss
 
@@ -91,7 +96,7 @@ with tf.Session(config=tf.ConfigProto(allow_soft_placement=True)) as sess:
             hypotheses = get_hypotheses(num_eval_batches, num_eval_samples, sess, y_hat, m.idx2token)
 
             logging.info("# write results")
-            model_output = "iwslt2016_E%02dL%.2f" % (_gs, _loss)
+            model_output = "trans_pointer%02dL%.2f" % (_gs, _loss)
 
             logging.info("# save models")
             ckpt_name = os.path.join(hp.logdir, model_output)

@@ -217,7 +217,7 @@ class Transformer:
         optimizer = tf.train.AdamOptimizer(lr)
         loss, summaries = None, None
         with tf.variable_scope(tf.get_variable_scope()):
-            for i, no in enumerate(self.hp.gpu_list):
+            for i, no in enumerate(self.hp.gpu_nums):
                 with tf.device("/gpu:%d" % no):
                     with tf.name_scope("tower_%d" % no):
                         memory, sents1 = self.encode(xs)
