@@ -36,6 +36,10 @@ Check `hparams.py` to see which parameters are possible. For example,
 ```
 python train.py --logdir myLog --batch_size 32 --train myTrain --eval myEval --test myTest
 ```
+My code also improve multi gpu to train this model, if you have more than one gpu, just run like this
+```
+python train.py --logdir myLog --batch_size 32 --train myTrain --eval myEval --test myTest --multi_gpu=True --gpu_nums=myGPUNums
+```
 
 | name | type | detail |
 |--------------------|------|-------------|
@@ -55,10 +59,12 @@ d_model | int| hidden dimension of encoder/decoder
 d_ff | int| hidden dimension of feedforward layer
 num_blocks | int| number of encoder/decoder blocks
 num_heads | int| number of attention heads
-maxlen | int| maximum length of a source sequence
-maxlen | int| maximum length of a target sequence
+maxlen1 | int| maximum length of a source sequence
+maxlen2 | int| maximum length of a target sequence
 dropout_rate | float| dropout rate
 beam_size | int| beam size for decode
+gpu_nums | int| gpu amount, which can allow how many gpu to train this model
+multi_gpu | bool| whether use multi gpu to train model
 ### Note
 Don't change the hyper-parameters of transformer util you have good solution, it will let the loss can't go down! if you have good solution, I hope you can tell me.
 
