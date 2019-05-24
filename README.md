@@ -9,6 +9,7 @@ like github gitlab, I didn't find the official code, so I decided to implement i
 * numpy>=1.15.4
 * sentencepiece==0.1.8
 * tqdm>=4.28.1
+* jieba>=0.39
 
 ## Model Structure
 ### Based
@@ -38,7 +39,8 @@ python train.py --logdir myLog --batch_size 32 --train myTrain --eval myEval --t
 ```
 My code also improve multi gpu to train this model, if you have more than one gpu, just run like this
 ```
-python train.py --logdir myLog --batch_size 32 --train myTrain --eval myEval --test myTest --multi_gpu=True --gpu_nums=myGPUNums
+python train.py --logdir myLog --batch_size 32 --train myTrain --eval myEval --test myTest --multi_gpu=True 
+--gpu_nums=myGPUNums
 ```
 
 | name | type | detail |
@@ -63,8 +65,7 @@ maxlen1 | int| maximum length of a source sequence
 maxlen2 | int| maximum length of a target sequence
 dropout_rate | float| dropout rate
 beam_size | int| beam size for decode
-gpu_nums | int| gpu amount, which can allow how many gpu to train this model
-multi_gpu | bool| whether use multi gpu to train model
+gpu_nums | int| gpu amount, which can allow how many gpu to train this model， default 1
 ### Note
 Don't change the hyper-parameters of transformer util you have good solution, it will let the loss can't go down! if you have good solution, I hope you can tell me.
 

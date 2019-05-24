@@ -184,40 +184,13 @@ class Transformer:
             return loss
 
     def train(self, xs, ys):
-        '''
-        Returns
-        loss: scalar.
-        train_op: training operation
-        global_step: scalar.
-        summaries: training summary node
-        '''
-        # forward
-        memory, sents1 = self.encode(xs)
-        logits, y, sents2 = self.decode(xs, ys, memory)
-
-        loss = self._calc_loss(y, logits)
-
-        global_step = tf.train.get_or_create_global_step()
-        lr = noam_scheme(self.hp.lr, global_step, self.hp.warmup_steps)
-
-        optimizer = tf.train.AdamOptimizer(lr)
-        train_op = optimizer.minimize(loss, global_step=global_step)
-
-        tf.summary.scalar('lr', lr)
-        tf.summary.scalar("loss", loss)
-        tf.summary.scalar("global_step", global_step)
-
-        summaries = tf.summary.merge_all()
-        return loss, train_op, global_step, summaries
-
-    def train_multi_gpu(self, xs, ys):
         tower_grads = []
         global_step = tf.train.get_or_create_global_step()
         lr = noam_scheme(self.hp.lr, global_step, self.hp.warmup_steps)
         optimizer = tf.train.AdamOptimizer(lr)
         loss, summaries = None, None
         with tf.variable_scope(tf.get_variable_scope()):
-            for i, no in enumerate(self.hp.gpu_nums):
+            for no in range(self.hp.gpu_nums):
                 with tf.device("/gpu:%d" % no):
                     with tf.name_scope("tower_%d" % no):
                         memory, sents1 = self.encode(xs)

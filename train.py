@@ -10,13 +10,12 @@ import logging
 import os
 
 import math
-import tensorflow as tf
 from tqdm import tqdm
 
 from data_load import get_batch
 from hparams import Hparams
 from model import Transformer
-from utils import save_hparams, save_variable_specs, get_hypotheses
+from utils import save_hparams, save_variable_specs, get_hypotheses, calc_rouge, import_tf
 
 logging.basicConfig(level=logging.INFO)
 
@@ -24,22 +23,27 @@ logging.info("# hparams")
 hparams = Hparams()
 parser = hparams.parser
 hp = parser.parse_args()
+
+# import tensorflow
+gpu_list = [str(i) for i in list(range(hp.gpu_nums))]
+tf = import_tf(gpu_list)
+
 save_hparams(hp, hp.logdir)
 
 logging.info("# Prepare train/eval batches")
-train_batches, num_train_batches, num_train_samples = get_batch(hp.train,
-                                                                hp.maxlen1,
-                                                                hp.maxlen2,
-                                                                hp.vocab,
-                                                                hp.batch_size,
-                                                                shuffle=True)
+train_batches, num_train_batches, num_train_samples, _ = get_batch(hp.train,
+                                                                    hp.maxlen1,
+                                                                    hp.maxlen2,
+                                                                    hp.vocab,
+                                                                    hp.batch_size,
+                                                                    shuffle=True)
 
-eval_batches, num_eval_batches, num_eval_samples = get_batch(hp.eval,
-                                                             hp.maxlen1,
-                                                             hp.maxlen2,
-                                                             hp.vocab,
-                                                             hp.batch_size,
-                                                             shuffle=False)
+eval_batches, num_eval_batches, num_eval_samples, eval_sent2 = get_batch(hp.eval,
+                                                                         hp.maxlen1,
+                                                                         hp.maxlen2,
+                                                                         hp.vocab,
+                                                                         hp.batch_size,
+                                                                         shuffle=False)
 
 # create a iterator of the correct shape and type
 iter = tf.data.Iterator.from_structure(train_batches.output_types, train_batches.output_shapes)
@@ -53,10 +57,7 @@ logging.info("# Load model")
 m = Transformer(hp)
 
 # whether use multi gpu
-if hp.multi_gpu:
-    loss, train_op, global_step, train_summaries = m.train_multi_gpu(xs, ys)
-else:
-    loss, train_op, global_step, train_summaries = m.train(xs, ys)
+loss, train_op, global_step, train_summaries = m.train(xs, ys)
 
 y_hat, eval_summaries, sent2, pred = m.eval(xs, ys)
 
@@ -81,7 +82,7 @@ with tf.Session(config=tf.ConfigProto(allow_soft_placement=True)) as sess:
         epoch = math.ceil(_gs / num_train_batches)
         summary_writer.add_summary(_summary, _gs)
 
-        if _gs % 5000 == 0 and _gs != 0:
+        if _gs % 5000 == 0:
             logging.info("steps {} is done".format(_gs))
             _loss = sess.run(loss) # train loss
 
@@ -97,6 +98,13 @@ with tf.Session(config=tf.ConfigProto(allow_soft_placement=True)) as sess:
 
             logging.info("# write results")
             model_output = "trans_pointer%02dL%.2f" % (_gs, _loss)
+            if not os.path.exists(hp.evaldir): os.makedirs(hp.evaldir)
+            translation = os.path.join(hp.evaldir, model_output)
+            with open(translation, 'w', encoding='utf-8') as fout:
+                fout.write("\n".join(hypotheses))
+
+            logging.info("# calc rouge score ")
+            calc_rouge(eval_sent2, hypotheses, _gs, hp.evaldir)
 
             logging.info("# save models")
             ckpt_name = os.path.join(hp.logdir, model_output)

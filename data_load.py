@@ -158,4 +158,4 @@ def get_batch(fpath1, maxlen1, maxlen2, vocab_fpath, batch_size, shuffle=False):
     sents1, sents2 = _load_data(fpath1, maxlen1, maxlen2)
     batches = _input_fn(sents1, sents2, vocab_fpath, batch_size, shuffle=shuffle)
     num_batches = calc_num_batches(len(sents1), batch_size)
-    return batches, num_batches, len(sents1)
+    return batches, num_batches, len(sents1), [sent.decode('utf-8') for sent in sents2]

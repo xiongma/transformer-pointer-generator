@@ -8,8 +8,8 @@ page: http://www.cnblogs.com/callyblog/
 import json
 import logging
 import os
-import re
 
+import jieba
 import tensorflow as tf
 
 logging.basicConfig(level=logging.INFO)
@@ -126,27 +126,82 @@ def get_hypotheses(num_batches, num_samples, sess, tensor, dict):
 
     return hypotheses[:num_samples]
 
-def calc_bleu(ref, translation):
-    '''Calculates bleu score and appends the report to translation
-    ref: reference file path
-    translation: model output file path
+def calc_rouge(references, models, global_step, logdir):
+    """
+    calculate rouge score
+    :param references: reference sentences
+    :param models: model sentences
+    :param global_step: global step
+    :param logdir: log dir
+    :return: rouge score
+    """
+    replaces = ['<s>', '</s>', '<pad>', '<unk>', ' ']
+    models_ = []
+    for model in models:
+        for rep in replaces:
+            model = model.replace(rep, '')
 
-    Returns
-    translation that the bleu score is appended to'''
-    get_bleu_score = "perl multi-bleu.perl {} < {} > {}".format(ref, translation, "temp")
-    os.system(get_bleu_score)
-    bleu_score_report = open("temp", "r").read()
-    print(bleu_score_report)
-    with open(translation, "a", encoding='utf-8') as fout:
-        fout.write("\n{}".format(bleu_score_report))
-    try:
-        score = re.findall("BLEU = ([^,]+)", bleu_score_report)[0]
-        new_translation = translation + "B{}".format(score)
-        os.system("mv {} {}".format(translation, new_translation))
-        os.remove(translation)
+        models_.append(model)
 
-    except: pass
-    os.remove("temp")
+    rouge1_scores = [rouge_1(model, reference) for model, reference in zip(models, references)]
+    rouge2_scores = [rouge_2(model, reference) for model, reference in zip(models, references)]
 
+    rouge1_score = sum(rouge1_scores) / len(rouge1_scores)
+    rouge2_score = sum(rouge2_scores) / len(rouge2_scores)
 
+    with open(os.path.join(logdir, 'rouge'), 'a', encoding='utf-8') as f:
+        f.write('global step: {}, ROUGE 1: {}, ROUGE 2: {}\n'.format(str(global_step), str(rouge1_score), str(rouge2_score)))
+
+def rouge_1(model, reference):
+    """
+    calculate rouge 1 score
+    :param model: model output
+    :param reference: reference
+    :return: rouge 1 score
+    """
+    terms_reference = jieba.cut(reference)
+    terms_model = jieba.cut(model)
+    grams_reference = list(terms_reference)
+    grams_model = list(terms_model)
+    temp = 0
+    ngram_all = len(grams_reference)
+    for x in grams_reference:
+        if x in grams_model: temp = temp + 1
+    rouge_1 = temp / ngram_all
+    return rouge_1
+
+def rouge_2(model, reference):
+    """
+    calculate rouge 2 score
+    :param model: model output
+    :param reference: reference
+    :return: rouge 2 score
+    """
+    terms_reference = jieba.cut(reference)
+    terms_model = jieba.cut(model)
+    grams_reference = list(terms_reference)
+    grams_model = list(terms_model)
+    gram_2_model = []
+    gram_2_reference = []
+    temp = 0
+    ngram_all = len(grams_reference) - 1
+    for x in range(len(grams_model) - 1):
+        gram_2_model.append(grams_model[x] + grams_model[x + 1])
+    for x in range(len(grams_reference) - 1):
+        gram_2_reference.append(grams_reference[x] + grams_reference[x + 1])
+    for x in gram_2_model:
+        if x in gram_2_reference: temp = temp + 1
+    rouge_2 = temp / ngram_all
+
+    return rouge_2
+
+def import_tf(gpu_list):
+    """
+    import tensorflow, set tensorflow graph load device
+    :param gpu_list: GPU list
+    :return: tensorflow instance
+    """
+    os.environ['CUDA_VISIBLE_DEVICES'] = ','.join(gpu_list)
+
+    return tf
 
