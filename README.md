@@ -9,7 +9,7 @@ like github gitlab, I didn't find the official code, so I decided to implement i
 * numpy>=1.15.4
 * sentencepiece==0.1.8
 * tqdm>=4.28.1
-* jieba>=0.39
+* jieba>=0.3x
 
 ## Model Structure
 ### Based
