@@ -35,12 +35,11 @@ python train.py
 ```
 Check `hparams.py` to see which parameters are possible. For example,
 ```
-python train.py --logdir myLog --batch_size 32 --train myTrain --eval myEval --test myTest
+python train.py --logdir myLog --batch_size 32 --train myTrain --eval myEval
 ```
 My code also improve multi gpu to train this model, if you have more than one gpu, just run like this
 ```
-python train.py --logdir myLog --batch_size 32 --train myTrain --eval myEval --test myTest --multi_gpu=True 
---gpu_nums=myGPUNums
+python train.py --logdir myLog --batch_size 32 --train myTrain --eval myEval --gpu_nums=myGPUNums
 ```
 
 | name | type | detail |
