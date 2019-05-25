@@ -10,7 +10,6 @@ import logging
 import os
 
 import jieba
-import tensorflow as tf
 
 logging.basicConfig(level=logging.INFO)
 
@@ -31,6 +30,7 @@ def convert_idx_to_token_tensor(inputs, idx2token):
     Returns
     1d string tensor.
     '''
+    import tensorflow as tf
     def my_func(inputs):
         return " ".join(idx2token[elem] for elem in inputs)
 
@@ -85,6 +85,7 @@ def save_variable_specs(fpath):
     Writes
     a text file named fpath.
     '''
+    import tensorflow as tf
     def _get_size(shp):
         '''Gets size of tensor shape
         shp: TensorShape
@@ -201,7 +202,22 @@ def import_tf(gpu_list):
     :param gpu_list: GPU list
     :return: tensorflow instance
     """
+    import tensorflow as tf
     os.environ['CUDA_VISIBLE_DEVICES'] = ','.join(gpu_list)
 
     return tf
 
+def split_input(xs, ys, gpu_nums):
+    """
+    split input
+    :param xs:
+    :param ys:
+    :param gpu_nums:
+    :return: split input by gpu numbers
+    """
+    import tensorflow as tf
+
+    xs = [tf.split(x, gpu_nums, axis=0) for x in xs]
+    ys = [tf.split(y, gpu_nums, axis=0) for y in ys]
+
+    return [(xs[0][i], xs[1][i]) for i in range(gpu_nums)], [(ys[0][i], ys[1][i], ys[2][i]) for i in range(gpu_nums)]

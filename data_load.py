@@ -100,7 +100,7 @@ def _generator_fn(sents1, sents2, vocab_fpath):
 
         yield (x, sent1.decode('utf-8')), (inputs, targets, sent2.decode('utf-8'))
 
-def _input_fn(sents1, sents2, vocab_fpath, batch_size, shuffle=False):
+def _input_fn(sents1, sents2, vocab_fpath, batch_size, gpu_nums, shuffle=False):
     '''Batchify data
     sents1: list of source sents
     sents2: list of target sents
@@ -133,14 +133,14 @@ def _input_fn(sents1, sents2, vocab_fpath, batch_size, shuffle=False):
         args=(sents1, sents2, vocab_fpath))  # <- arguments for generator_fn. converted to np string arrays
 
     if shuffle: # for training
-        dataset = dataset.shuffle(128*batch_size)
+        dataset = dataset.shuffle(128*batch_size*gpu_nums)
 
     dataset = dataset.repeat()  # iterate forever
-    dataset = dataset.padded_batch(batch_size, shapes, paddings)
+    dataset = dataset.padded_batch(batch_size*gpu_nums, shapes, paddings)
 
     return dataset
 
-def get_batch(fpath1, maxlen1, maxlen2, vocab_fpath, batch_size, shuffle=False):
+def get_batch(fpath1, maxlen1, maxlen2, vocab_fpath, batch_size, gpu_nums, shuffle=False):
     '''Gets training / evaluation mini-batches
     fpath1: source file path. string.
     fpath2: target file path. string.
@@ -156,6 +156,6 @@ def get_batch(fpath1, maxlen1, maxlen2, vocab_fpath, batch_size, shuffle=False):
     num_samples
     '''
     sents1, sents2 = _load_data(fpath1, maxlen1, maxlen2)
-    batches = _input_fn(sents1, sents2, vocab_fpath, batch_size, shuffle=shuffle)
+    batches = _input_fn(sents1, sents2, vocab_fpath, batch_size, gpu_nums, shuffle=shuffle)
     num_batches = calc_num_batches(len(sents1), batch_size)
     return batches, num_batches, len(sents1), [sent.decode('utf-8') for sent in sents2]

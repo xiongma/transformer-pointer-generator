@@ -15,7 +15,7 @@ class Hparams:
 
     # train
     ## files
-    parser.add_argument('--train', default='data/train.csv',
+    parser.add_argument('--train', default='data/test.csv',
                              help="data for train")
 
     parser.add_argument('--eval', default='data/test.csv',
@@ -53,5 +53,5 @@ class Hparams:
     parser.add_argument('--dropout_rate', default=0.1, type=float)
     parser.add_argument('--beam_size', default=4, type=int,
                         help="beam size")
-    parser.add_argument('--gpu_nums', default=1, type=int,
+    parser.add_argument('--gpu_nums', default=3, type=int,
                         help="gpu amount, which can allow how many gpu to train this model")

@@ -12,7 +12,7 @@ from tqdm import tqdm
 
 from data_load import _load_vocab
 from modules import get_token_embeddings, ff, positional_encoding, multihead_attention, noam_scheme
-from utils import convert_idx_to_token_tensor
+from utils import convert_idx_to_token_tensor, split_input
 
 logging.basicConfig(level=logging.INFO)
 
@@ -189,12 +189,13 @@ class Transformer:
         lr = noam_scheme(self.hp.lr, global_step, self.hp.warmup_steps)
         optimizer = tf.train.AdamOptimizer(lr)
         loss, summaries = None, None
+        xs, ys = split_input(xs, ys, self.hp.gpu_nums)
         with tf.variable_scope(tf.get_variable_scope()):
             for no in range(self.hp.gpu_nums):
                 with tf.device("/gpu:%d" % no):
                     with tf.name_scope("tower_%d" % no):
-                        memory, sents1 = self.encode(xs)
-                        logits, y, sents2 = self.decode(xs, ys, memory)
+                        memory, sents1 = self.encode(xs[no])
+                        logits, y, sents2 = self.decode(xs[no], ys[no], memory)
                         tf.get_variable_scope().reuse_variables()
 
                         loss = self._calc_loss(y, logits)
@@ -208,7 +209,6 @@ class Transformer:
 
             tf.summary.scalar('lr', lr)
             tf.summary.scalar("train_loss", loss)
-            tf.summary.scalar("global_step", global_step)
             summaries = tf.summary.merge_all()
 
         return loss, train_op, global_step, summaries
@@ -270,4 +270,4 @@ class Transformer:
         tf.summary.text("sent2", sent2)
         summaries = tf.summary.merge_all()
 
-        return y_hat, summaries, sent2, pred
+        return y_hat, summaries, sent2, pred, eval_loss
