@@ -80,8 +80,7 @@ with tf.Session(config=tf.ConfigProto(allow_soft_placement=True)) as sess:
     for i in tqdm(range(_gs, total_steps+1, hp.gpu_nums)):
         _, _gs, _summary = sess.run([train_op, global_step, train_summaries])
         summary_writer.add_summary(_summary, _gs)
-
-        if i % 5000 == 0:
+        if _gs % 3000 == 0:
             logging.info("steps {} is done".format(_gs))
             _loss = sess.run(loss) # train loss
 

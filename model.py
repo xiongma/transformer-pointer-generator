@@ -186,7 +186,8 @@ class Transformer:
     def train(self, xs, ys):
         tower_grads = []
         global_step = tf.train.get_or_create_global_step()
-        lr = noam_scheme(self.hp.lr, global_step, self.hp.warmup_steps)
+        global_step_ = global_step * self.hp.gpu_nums
+        lr = noam_scheme(self.hp.lr, global_step_, self.hp.warmup_steps)
         optimizer = tf.train.AdamOptimizer(lr)
         loss, summaries = None, None
         xs, ys = split_input(xs, ys, self.hp.gpu_nums)
@@ -211,7 +212,7 @@ class Transformer:
             tf.summary.scalar("train_loss", loss)
             summaries = tf.summary.merge_all()
 
-        return loss, train_op, global_step, summaries
+        return loss, train_op, global_step_, summaries
 
     def average_gradients(self, tower_grads):
         average_grads = []
