@@ -135,7 +135,7 @@ def calc_rouge(references, models, global_step, logdir):
     :param logdir: log dir
     :return: rouge score
     """
-    replaces = ['<s>', '</s>', '<pad>', '<unk>', ' ']
+    replaces = [' ', '<s>', '</s>', '<pad>', '<unk>']
     models_ = []
     for model in models:
         for rep in replaces:
