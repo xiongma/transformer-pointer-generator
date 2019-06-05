@@ -40,7 +40,7 @@ class Hypothesis:
         return self.tokens[-1]
 
     def __str__(self):
-        return ''.join(list(self.sents)[:-4])
+        return ''.join(list(self.sents))
 
 class BeamSearch:
     def __init__(self, model, beam_size, start_token, end_token, id2token, max_steps, input_x, input_y, logits,
@@ -88,11 +88,9 @@ class BeamSearch:
 
         results = []
         steps = 0
-        import time
         while steps < self.max_steps and len(results) < self.beam_size:
-            # start = time.time()
-            top_k = sess.run([self.top_k_], feed_dict={self.model.memory: [memory[0] for _ in range(self.beam_size)],
-                                                       self.input_x: [input_x[0] for _ in range(self.beam_size)],
+            top_k = sess.run([self.top_k_], feed_dict={self.model.memory: [memory] * self.beam_size,
+                                                       self.input_x: [input_x] * self.beam_size,
                                                        self.input_y: [h.tokens for h in hyps]})
             # print(time.time() - start)
             indices = [list(indice[-1]) for indice in top_k[0][1]]

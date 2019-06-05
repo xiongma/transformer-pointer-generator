@@ -40,10 +40,10 @@ class Transformer:
         memory: encoder outputs. (N, T1, d_model)
         '''
         with tf.variable_scope("encoder", reuse=tf.AUTO_REUSE):
-            x, sents1 = xs
+            self.x, sents1 = xs
 
             # embedding
-            enc = tf.nn.embedding_lookup(self.embeddings, x) # (N, T1, d_model)
+            enc = tf.nn.embedding_lookup(self.embeddings, self.x) # (N, T1, d_model)
             enc *= self.hp.d_model**0.5 # scale
 
             enc += positional_encoding(enc, self.hp.maxlen1)
@@ -53,16 +53,16 @@ class Transformer:
                 with tf.variable_scope("num_blocks_{}".format(i), reuse=tf.AUTO_REUSE):
                     # self-attention
                     enc, _ = multihead_attention(queries=enc,
-                                              keys=enc,
-                                              values=enc,
-                                              num_heads=self.hp.num_heads,
-                                              dropout_rate=self.hp.dropout_rate,
-                                              training=training,
-                                              causality=False)
+                                                  keys=enc,
+                                                  values=enc,
+                                                  num_heads=self.hp.num_heads,
+                                                  dropout_rate=self.hp.dropout_rate,
+                                                  training=training,
+                                                  causality=False)
                     # feed forward
                     enc = ff(enc, num_units=[self.hp.d_ff, self.hp.d_model])
-        memory = enc
-        return memory, sents1
+        self.enc_output = enc
+        return self.enc_output, sents1
 
     def decode(self, xs, ys, memory, training=True):
         '''
@@ -76,14 +76,17 @@ class Transformer:
         '''
         self.memory = memory
         with tf.variable_scope("decoder", reuse=tf.AUTO_REUSE):
-            decoder_inputs, y, sents2 = ys
+            self.decoder_inputs, y, sents2 = ys
             x, _, = xs
 
             # embedding
-            dec = tf.nn.embedding_lookup(self.embeddings, decoder_inputs)  # (N, T2, d_model)
+            dec = tf.nn.embedding_lookup(self.embeddings, self.decoder_inputs)  # (N, T2, d_model)
             dec *= self.hp.d_model ** 0.5  # scale
 
             dec += positional_encoding(dec, self.hp.maxlen2)
+
+            before_dec = dec
+
             dec = tf.layers.dropout(dec, self.hp.dropout_rate, training=training)
 
             attn_dists = []
@@ -99,7 +102,6 @@ class Transformer:
                                                  training=training,
                                                  causality=True,
                                                  scope="self_attention")
-
                     # Vanilla attention
                     dec, attn_dist = multihead_attention(queries=dec,
                                                           keys=self.memory,
@@ -117,15 +119,16 @@ class Transformer:
         weights = tf.transpose(self.embeddings) # (d_model, vocab_size)
         logits = tf.einsum('ntd,dk->ntk', dec, weights) # (N, T2, vocab_size)
 
-        with tf.variable_scope("decoder", reuse=tf.AUTO_REUSE):
-            gens = tf.layers.dense(logits, 1, activation=tf.sigmoid, trainable=training, use_bias=False)
+        with tf.variable_scope("gen", reuse=tf.AUTO_REUSE):
+            gens = tf.layers.dense(tf.concat([before_dec, dec, attn_dists[-1]], axis=-1), units=1, activation=tf.sigmoid,
+                                   trainable=training, use_bias=False)
 
         logits = tf.nn.softmax(logits)
 
         # final distribution
-        logits = self._calc_final_dist(x, gens, logits, attn_dists[-1])
+        self.logits = self._calc_final_dist(x, gens, logits, attn_dists[-1])
 
-        return logits, y, sents2
+        return self.logits, y, sents2
 
     def _calc_final_dist(self, x, gens, vocab_dists, attn_dists):
         """Calculate the final distribution, for the pointer-generator model
@@ -176,7 +179,7 @@ class Transformer:
             indices = tf.stack([dec, targets], axis=2) # [batch_size, dec, 2]
 
             loss = tf.map_fn(fn=lambda x: tf.gather_nd(x[1], x[0]), elems=(indices, final_dists), dtype=tf.float32)
-            loss = -tf.log(loss)
+            loss = tf.log(0.9) - tf.log(loss)
 
             nonpadding = tf.to_float(tf.not_equal(targets, self.token2idx["<pad>"]))  # 0: <pad>
             loss = tf.reduce_sum(loss * nonpadding) / (tf.reduce_sum(nonpadding) + 1e-7)
@@ -187,9 +190,9 @@ class Transformer:
         tower_grads = []
         global_step = tf.train.get_or_create_global_step()
         global_step_ = global_step * self.hp.gpu_nums
-        lr = noam_scheme(self.hp.lr, global_step_, self.hp.warmup_steps)
+        lr = noam_scheme(self.hp.d_model, global_step_, self.hp.warmup_steps)
         optimizer = tf.train.AdamOptimizer(lr)
-        loss, summaries = None, None
+        losses = []
         xs, ys = split_input(xs, ys, self.hp.gpu_nums)
         with tf.variable_scope(tf.get_variable_scope()):
             for no in range(self.hp.gpu_nums):
@@ -200,14 +203,14 @@ class Transformer:
                         tf.get_variable_scope().reuse_variables()
 
                         loss = self._calc_loss(y, logits)
-
+                        losses.append(loss)
                         grads = optimizer.compute_gradients(loss)
                         tower_grads.append(grads)
 
         with tf.device("/cpu:0"):
             grads = self.average_gradients(tower_grads)
             train_op = optimizer.apply_gradients(grads, global_step=global_step)
-
+            loss = sum(losses) / len(losses)
             tf.summary.scalar('lr', lr)
             tf.summary.scalar("train_loss", loss)
             summaries = tf.summary.merge_all()
@@ -245,8 +248,6 @@ class Transformer:
         memory, sents1 = self.encode(xs, False)
 
         y_hat = None
-
-        logits = None
         logging.info("Inference graph is being built. Please be patient.")
         for _ in tqdm(range(self.hp.maxlen2)):
             logits, y, sents2 = self.decode(xs, ys, memory, False)
@@ -263,12 +264,9 @@ class Transformer:
         pred = convert_idx_to_token_tensor(y_hat[n], self.idx2token)
         sent2 = sents2[n]
 
-        eval_loss = self._calc_loss(y, logits)
-
-        tf.summary.scalar('eval_loss', eval_loss)
         tf.summary.text("sent1", sent1)
         tf.summary.text("pred", pred)
         tf.summary.text("sent2", sent2)
         summaries = tf.summary.merge_all()
 
-        return y_hat, summaries, sent2, pred, eval_loss
+        return y_hat, summaries

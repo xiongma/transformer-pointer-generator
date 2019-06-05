@@ -41,7 +41,7 @@ def get_token_embeddings(vocab_size, num_units, zero_pad=True):
     Returns
     weight variable: (V, E)
     '''
-    with tf.variable_scope("shared_weight_matrix"):
+    with tf.variable_scope("shared_weight_matrix", reuse=tf.AUTO_REUSE):
         embeddings = tf.get_variable('weight_mat',
                                    dtype=tf.float32,
                                    shape=(vocab_size, num_units),
@@ -82,7 +82,7 @@ def scaled_dot_product_attention(Q, K, V,
             outputs = mask(outputs, type="future")
 
         # softmax
-        attn_dists = tf.nn.softmax(tf.reduce_mean(tf.split(outputs, num_heads, axis=0), axis=0))
+        attn_dists = tf.nn.softmax(tf.reduce_sum(tf.split(outputs, num_heads, axis=0), axis=0))
         outputs = tf.nn.softmax(outputs)
         attention = tf.transpose(outputs, [0, 2, 1])
         tf.summary.image("attention", tf.expand_dims(attention[:1], -1))
@@ -300,12 +300,12 @@ def positional_encoding(inputs,
 
         return tf.to_float(outputs)
 
-def noam_scheme(init_lr, global_step, warmup_steps=4000.):
+def noam_scheme(d_model, global_step, warmup_steps=4000.):
     '''Noam scheme learning rate decay
-    init_lr: initial learning rate. scalar.
+    d_model: encoder and decoder embedding
     global_step: scalar.
     warmup_steps: scalar. During warmup_steps, learning rate increases
         until it reaches init_lr.
     '''
     step = tf.cast(global_step + 1, dtype=tf.float32)
-    return init_lr * warmup_steps ** 0.5 * tf.minimum(step * warmup_steps ** -1.5, step ** -0.5)
+    return d_model ** -0.5 * tf.minimum(step * warmup_steps ** -1.5, step ** -0.5)

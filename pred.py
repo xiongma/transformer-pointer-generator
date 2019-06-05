@@ -89,11 +89,11 @@ class Prediction:
         while len(input_x) < 128: input_x.append('<pad>')
         input_x = input_x[:128]
 
-        input_x = [[self.token2idx.get(s, self.token2idx['<unk>']) for s in input_x]]
+        input_x = [self.token2idx.get(s, self.token2idx['<unk>']) for s in input_x]
 
         memory = self.sess.run(self.memory, feed_dict={self.input_x: input_x})
 
-        return self.bs.search(self.sess, input_x, memory)
+        return self.bs.search(self.sess, input_x, memory[0])
 
     def _add_placeholder(self):
         """

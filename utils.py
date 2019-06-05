@@ -9,8 +9,6 @@ import json
 import logging
 import os
 
-import jieba
-
 logging.basicConfig(level=logging.INFO)
 
 def calc_num_batches(total_num, batch_size):
@@ -36,7 +34,7 @@ def convert_idx_to_token_tensor(inputs, idx2token):
 
     return tf.py_func(my_func, [inputs], tf.string)
 
-def postprocess(hypotheses, idx2token):
+def postprocess(hypotheses):
     '''Processes translation outputs.
     hypotheses: list of encoded predictions
     idx2token: dictionary
@@ -46,10 +44,12 @@ def postprocess(hypotheses, idx2token):
     '''
     _hypotheses = []
     for h in hypotheses:
-        sent = "".join(idx2token[idx] for idx in h)
-        sent = sent.split("</s>")[0].strip()
-        sent = sent.replace("▁", " ") # remove bpe symbols
-        _hypotheses.append(' '.join(list(sent.strip())))
+        h = str(h)
+        h = h.replace('<s>', '')
+        h = h.replace('</s>', '')
+        h = h.replace('<pad>', '')
+        _hypotheses.append(h)
+
     return _hypotheses
 
 def save_hparams(hparams, path):
@@ -108,7 +108,7 @@ def save_variable_specs(fpath):
         fout.write("\n".join(params))
     logging.info("Variables info has been saved.")
 
-def get_hypotheses(num_batches, num_samples, sess, tensor, dict):
+def get_hypotheses(num_batches, num_samples, sess, model, beam_search, tensor, handle_placehoder, handle):
     '''Gets hypotheses.
     num_batches: scalar.
     num_samples: scalar.
@@ -119,15 +119,19 @@ def get_hypotheses(num_batches, num_samples, sess, tensor, dict):
     Returns
     hypotheses: list of sents
     '''
-    hypotheses = []
+    hypotheses, all_targets = [], []
     for _ in range(num_batches):
-        h = sess.run(tensor)
-        hypotheses.extend(h.tolist())
-    hypotheses = postprocess(hypotheses, dict)
+        articles, targets = sess.run(tensor, feed_dict={handle_placehoder: handle})
+        memories = sess.run(model.enc_output, feed_dict={model.x: articles})
+        for article, memory in zip(articles, memories):
+            summary = beam_search.search(sess, article, memory)
+            summary = postprocess(summary)
+            hypotheses.append(summary)
+        all_targets.extend([target.decode('utf-8') for target in targets])
 
-    return hypotheses[:num_samples]
+    return hypotheses[:num_samples], all_targets[:num_samples]
 
-def calc_rouge(references, models, global_step, logdir):
+def calc_rouge(rouge, references, models, global_step, logdir):
     """
     calculate rouge score
     :param references: reference sentences
@@ -136,65 +140,45 @@ def calc_rouge(references, models, global_step, logdir):
     :param logdir: log dir
     :return: rouge score
     """
-    replaces = [' ', '<s>', '</s>', '<pad>', '<unk>']
-    models_ = []
-    for model in models:
-        for rep in replaces:
-            model = model.replace(rep, '')
+    # delete symbol
+    references = [reference.replace('</s>', '') for reference in references]
 
-        models_.append(model)
+    # calculate rouge score
+    rouge1_scores = [_rouge(rouge, model, reference, type='rouge1') for model, reference in zip(models, references)]
+    rouge2_scores = [_rouge(rouge, model, reference, type='rouge2') for model, reference in zip(models, references)]
+    rougel_scores = [_rouge(rouge, model, reference, type='rougel') for model, reference in zip(models, references)]
 
-    rouge1_scores = [rouge_1(model, reference) for model, reference in zip(models, references)]
-    rouge2_scores = [rouge_2(model, reference) for model, reference in zip(models, references)]
-
+    # get rouge score
     rouge1_score = sum(rouge1_scores) / len(rouge1_scores)
     rouge2_score = sum(rouge2_scores) / len(rouge2_scores)
+    rougel_score = sum(rougel_scores) / len(rouge2_scores)
 
+    # write result
     with open(os.path.join(logdir, 'rouge'), 'a', encoding='utf-8') as f:
-        f.write('global step: {}, ROUGE 1: {}, ROUGE 2: {}\n'.format(str(global_step), str(rouge1_score), str(rouge2_score)))
+        f.write('global step: {}, ROUGE 1: {}, ROUGE 2: {}, ROUGE L: {}\n'.format(str(global_step), str(rouge1_score),
+                                                                                  str(rouge2_score), str(rougel_score)))
+    return rouge1_score
 
-def rouge_1(model, reference):
+def _rouge(rouge, model, reference, type='rouge1'):
     """
-    calculate rouge 1 score
-    :param model: model output
+    calculate rouge socore
+    :param rouge: sumeval instance
+    :param model: model prediction, list
     :param reference: reference
+    :param type: rouge1, rouge2, rougel
     :return: rouge 1 score
     """
-    terms_reference = jieba.cut(reference)
-    terms_model = jieba.cut(model)
-    grams_reference = list(terms_reference)
-    grams_model = list(terms_model)
-    temp = 0
-    ngram_all = len(grams_reference)
-    for x in grams_reference:
-        if x in grams_model: temp = temp + 1
-    rouge_1 = temp / ngram_all
-    return rouge_1
+    scores = None
+    if type == 'rouge1':
+        scores = [rouge.rouge_n(summary=m, references=reference, n=1) for m in model]
 
-def rouge_2(model, reference):
-    """
-    calculate rouge 2 score
-    :param model: model output
-    :param reference: reference
-    :return: rouge 2 score
-    """
-    terms_reference = jieba.cut(reference)
-    terms_model = jieba.cut(model)
-    grams_reference = list(terms_reference)
-    grams_model = list(terms_model)
-    gram_2_model = []
-    gram_2_reference = []
-    temp = 0
-    ngram_all = len(grams_reference) - 1
-    for x in range(len(grams_model) - 1):
-        gram_2_model.append(grams_model[x] + grams_model[x + 1])
-    for x in range(len(grams_reference) - 1):
-        gram_2_reference.append(grams_reference[x] + grams_reference[x + 1])
-    for x in gram_2_model:
-        if x in gram_2_reference: temp = temp + 1
-    rouge_2 = temp / ngram_all
+    if type == 'rouge2':
+        scores = [rouge.rouge_n(summary=m, references=reference, n=2) for m in model]
 
-    return rouge_2
+    if type == 'rougel':
+        scores = [rouge.rouge_l(summary=m, references=reference) for m in model]
+
+    return sum(scores) / len(scores)
 
 def import_tf(gpu_list):
     """
@@ -216,8 +200,7 @@ def split_input(xs, ys, gpu_nums):
     :return: split input by gpu numbers
     """
     import tensorflow as tf
-
-    xs = [tf.split(x, gpu_nums, axis=0) for x in xs]
-    ys = [tf.split(y, gpu_nums, axis=0) for y in ys]
+    xs = [tf.split(x, num_or_size_splits=gpu_nums, axis=0) for x in xs]
+    ys = [tf.split(y, num_or_size_splits=gpu_nums, axis=0) for y in ys]
 
     return [(xs[0][i], xs[1][i]) for i in range(gpu_nums)], [(ys[0][i], ys[1][i], ys[2][i]) for i in range(gpu_nums)]

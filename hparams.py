@@ -27,6 +27,9 @@ class Hparams:
     parser.add_argument('--vocab', default='vocab',
                         help="vocabulary file path")
 
+    parser.add_argument('--stop_vocab', default='stop_vocab',
+                        help="stop vocabulary file path")
+
     # training scheme
     parser.add_argument('--batch_size', default=32, type=int)
     parser.add_argument('--eval_batch_size', default=32, type=int)
@@ -48,10 +51,10 @@ class Hparams:
                         help="number of attention heads")
     parser.add_argument('--maxlen1', default=150, type=int,
                         help="maximum length of a source sequence")
-    parser.add_argument('--maxlen2', default=30, type=int,
+    parser.add_argument('--maxlen2', default=25, type=int,
                         help="maximum length of a target sequence")
     parser.add_argument('--dropout_rate', default=0.1, type=float)
     parser.add_argument('--beam_size', default=4, type=int,
                         help="beam size")
-    parser.add_argument('--gpu_nums', default=3, type=int,
+    parser.add_argument('--gpu_nums', default=1, type=int,
                         help="gpu amount, which can allow how many gpu to train this model")

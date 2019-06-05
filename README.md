@@ -6,10 +6,9 @@ like github gitlab, I didn't find the official code, so I decided to implement i
 ## Requirements
 * python==3.x (Let's move on to python 3 if you still use python 2)
 * tensorflow==1.12.0
-* numpy>=1.15.4
-* sentencepiece==0.1.8
 * tqdm>=4.28.1
 * jieba>=0.3x
+* sumeval>=0.2.0
 
 ## Model Structure
 ### Based
@@ -75,6 +74,3 @@ Don't change the hyper-parameters of transformer util you have good solution, it
 * Transformer 
 <img src="fig/transformer-loss.png">
 As you see, transformer-pointer generator model can let the loss go down very quickly!
-
-## Todo
-Add rouge score
