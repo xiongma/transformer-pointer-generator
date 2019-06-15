@@ -193,11 +193,11 @@ def import_tf(gpu_list):
 
 def split_input(xs, ys, gpu_nums):
     """
-    split input
-    :param xs:
-    :param ys:
-    :param gpu_nums:
-    :return: split input by gpu numbers
+    split input by gpu numbers
+    :param xs: dataset xs
+    :param ys: dataset ys
+    :param gpu_nums: gpu numbers
+    :return: list: input_x [gpu_num, batch_size], input_y [gpu_num, batch_size]
     """
     import tensorflow as tf
     xs = [tf.split(x, num_or_size_splits=gpu_nums, axis=0) for x in xs]

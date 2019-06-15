@@ -17,18 +17,6 @@ from utils import convert_idx_to_token_tensor, split_input
 logging.basicConfig(level=logging.INFO)
 
 class Transformer:
-    '''
-    xs: tuple of
-        x: int32 tensor. (N, T1)
-        x_seqlens: int32 tensor. (N,)
-        sents1: str tensor. (N,)
-    ys: tuple of
-        decoder_input: int32 tensor. (N, T2)
-        y: int32 tensor. (N, T2)
-        y_seqlen: int32 tensor. (N, )
-        sents2: str tensor. (N,)
-    training: boolean.
-    '''
     def __init__(self, hp):
         self.hp = hp
         self.token2idx, self.idx2token = _load_vocab(hp.vocab)
@@ -70,7 +58,6 @@ class Transformer:
 
         Returns
         logits: (N, T2, V). float32.
-        y_hat: (N, T2). int32
         y: (N, T2). int32
         sents2: (N,). string.
         '''
@@ -170,6 +157,12 @@ class Transformer:
         return final_dists
 
     def _calc_loss(self, targets, final_dists):
+        """
+        calculate loss
+        :param targets: reference
+        :param final_dists:  transformer decoder output add by pointer generator
+        :return: loss
+        """
         with tf.name_scope('loss'):
             dec = tf.shape(targets)[1]
             batch_nums = tf.shape(targets)[0]
@@ -187,6 +180,15 @@ class Transformer:
             return loss
 
     def train(self, xs, ys):
+        """
+        train model
+        :param xs: dataset xs
+        :param ys: dataset ys
+        :return: loss
+                 train op
+                 global step
+                 tensorflow summary
+        """
         tower_grads = []
         global_step = tf.train.get_or_create_global_step()
         global_step_ = global_step * self.hp.gpu_nums
@@ -218,6 +220,11 @@ class Transformer:
         return loss, train_op, global_step_, summaries
 
     def average_gradients(self, tower_grads):
+        """
+        average gradients of all gpu gradients
+        :param tower_grads: list, each element is a gradient of gpu
+        :return: be averaged gradient
+        """
         average_grads = []
         for grad_and_vars in zip(*tower_grads):
             grads = []
@@ -237,6 +244,7 @@ class Transformer:
         At inference, input ys is ignored.
         Returns
         y_hat: (N, T2)
+        tensorflow summary
         '''
         # decoder_inputs <s> sentences
         decoder_inputs, y, sents2 = ys
