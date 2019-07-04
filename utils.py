@@ -8,6 +8,7 @@ page: http://www.cnblogs.com/callyblog/
 import json
 import logging
 import os
+from tqdm import tqdm
 
 logging.basicConfig(level=logging.INFO)
 
@@ -120,7 +121,7 @@ def get_hypotheses(num_batches, num_samples, sess, model, beam_search, tensor, h
     hypotheses: list of sents
     '''
     hypotheses, all_targets = [], []
-    for _ in range(num_batches):
+    for _ in tqdm(range(num_batches)):
         articles, targets = sess.run(tensor, feed_dict={handle_placehoder: handle})
         memories = sess.run(model.enc_output, feed_dict={model.x: articles})
         for article, memory in zip(articles, memories):
@@ -178,7 +179,7 @@ def _rouge(rouge, model, reference, type='rouge1'):
     if type == 'rougel':
         scores = [rouge.rouge_l(summary=m, references=reference) for m in model]
 
-    return sum(scores) / len(scores)
+    return max(scores)
 
 def import_tf(gpu_list):
     """
@@ -194,9 +195,9 @@ def import_tf(gpu_list):
 def split_input(xs, ys, gpu_nums):
     """
     split input
-    :param xs:
-    :param ys:
-    :param gpu_nums:
+    :param xs: articles
+    :param ys: summaries
+    :param gpu_nums: gpu numbers
     :return: split input by gpu numbers
     """
     import tensorflow as tf
