@@ -154,10 +154,9 @@ def _input_fn(sents1, sents2, vocab_fpath, batch_size, gpu_nums, maxlen1, maxlen
 
     return dataset
 
-def get_batch(fpath1, maxlen1, maxlen2, vocab_fpath, batch_size, gpu_nums, shuffle=False):
+def get_batch(fpath, maxlen1, maxlen2, vocab_fpath, batch_size, gpu_nums, shuffle=False):
     '''Gets training / evaluation mini-batches
-    fpath1: source file path. string.
-    fpath2: target file path. string.
+    fpath: source file path. string.
     maxlen1: source sent maximum length. scalar.
     maxlen2: target sent maximum length. scalar.
     vocab_fpath: string. vocabulary file path.
@@ -169,7 +168,7 @@ def get_batch(fpath1, maxlen1, maxlen2, vocab_fpath, batch_size, gpu_nums, shuff
     num_batches: number of mini-batches
     num_samples
     '''
-    sents1, sents2 = _load_data(fpath1, maxlen1, maxlen2)
+    sents1, sents2 = _load_data(fpath, maxlen1, maxlen2)
     batches = _input_fn(sents1, sents2, vocab_fpath, batch_size, gpu_nums, maxlen1, maxlen2, shuffle=shuffle)
     num_batches = calc_num_batches(len(sents1), batch_size*gpu_nums)
     return batches, num_batches, len(sents1)
