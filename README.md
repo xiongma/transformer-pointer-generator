@@ -70,7 +70,7 @@ Don't change the hyper-parameters of transformer util you have good solution, it
 ## Evaluation
 ### Loss
 * Transformer-Pointer generator
-<img src="fig/transformer-pointer gererator-loss.png">
+<img src="fig/transformer-pointer gererator-loss.png">.
 * Transformer 
 <img src="fig/transformer-loss.png">
 As you see, transformer-pointer generator model can let the loss go down very quickly!
