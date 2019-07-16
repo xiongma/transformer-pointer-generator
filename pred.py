@@ -27,16 +27,17 @@ def import_tf(device_id=-1, verbose=False):
     return tf
 
 class Prediction:
-    def __init__(self, model_dir, vocab_file):
+    def __init__(self, args):
         """
         :param model_dir: model dir path
         :param vocab_file: vocab file path
         """
         self.tf = import_tf(0)
 
-        self.model_dir = model_dir
-        self.vocab_file = vocab_file
-        self.token2idx, self.idx2token = _load_vocab(vocab_file)
+        self.args = args
+        self.model_dir = args.logdir
+        self.vocab_file = args.vocab
+        self.token2idx, self.idx2token = _load_vocab(args.vocab)
 
         hparams = Hparams()
         parser = hparams.parser
@@ -86,12 +87,12 @@ class Prediction:
         :return: prediction result
         """
         input_x = list(content)
-        while len(input_x) < 128: input_x.append('<pad>')
-        input_x = input_x[:128]
+        while len(input_x) < self.args.maxlen1: input_x.append('<pad>')
+        input_x = input_x[:self.args.maxlen1]
 
         input_x = [self.token2idx.get(s, self.token2idx['<unk>']) for s in input_x]
 
-        memory = self.sess.run(self.memory, feed_dict={self.input_x: input_x})
+        memory = self.sess.run(self.memory, feed_dict={self.input_x: [input_x]})
 
         return self.bs.search(self.sess, input_x, memory[0])
 
@@ -99,5 +100,15 @@ class Prediction:
         """
         add tensorflow placeholder
         """
-        self.input_x = self.tf.placeholder(dtype=self.tf.int32, shape=[None, None], name='input_x')
+        self.input_x = self.tf.placeholder(dtype=self.tf.int32, shape=[None, self.args.maxlen1], name='input_x')
         self.input_y = self.tf.placeholder(dtype=self.tf.int32, shape=[None, None], name='input_y')
+
+if __name__ == '__main__':
+    hparams = Hparams()
+    parser = hparams.parser
+    hp = parser.parse_args()
+    preds = Prediction(hp)
+    content = '2014年，51信用卡管家跟宜信等P2P公司合作，推出线上信贷产品“瞬时贷”，其是一种纯在线操作的信贷模式。51信用卡管家创始人孙海涛说，51目前每天放贷1000万，预计2015年，自营产品加上瞬>时贷，放贷额度将远超'
+    result = preds.predict(content)
+    for res in result:
+        print(res)
