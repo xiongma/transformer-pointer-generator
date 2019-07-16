@@ -74,3 +74,5 @@ Don't change the hyper-parameters of transformer util you have good solution, it
 * Transformer 
 <img src="fig/transformer-loss.png">
 As you see, transformer-pointer generator model can let the loss go down very quickly!
+
+## If you like it, and think it useful for you, hope you can star.
