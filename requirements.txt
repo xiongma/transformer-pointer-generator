@@ -1,4 +1,4 @@
-tensorflow==1.15.4
+tensorflow==2.5.0
 tqdm>=4.28.1
 jieba>=0.3x
 sumeval>=0.2.0
